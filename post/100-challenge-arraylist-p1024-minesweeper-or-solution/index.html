@@ -1,0 +1,279 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>[100 challenge Array/List] P1024 Minesweeper | ★ Solution | Linyong GAN</title>
+<link rel="shortcut icon" href="https://LinyongGAN.github.io/favicon.ico?v=1728181861934">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://LinyongGAN.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="[100 challenge Array/List] P1024 Minesweeper | ★ Solution | Linyong GAN - Atom Feed" href="https://LinyongGAN.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="题意
+雷区有两行，只有第一行有埋雷。现在给定第二行体现出来的周围雷的个数，求方案数。
+思路
+显然（结合标签也可以看出来）是一道动态规划。动规难的就是状态的构建和转移，真正的代码实现并不复杂。
+动规方程构建
+记 dp[i][j] 表示在 i ..." />
+    <meta name="keywords" content="100-challenge" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://LinyongGAN.github.io">
+  <img class="avatar" src="https://LinyongGAN.github.io/images/avatar.png?v=1728181861934" alt="">
+  </a>
+  <h1 class="site-title">
+    Linyong GAN
+  </h1>
+  <p class="site-description">
+    年轻人，好好学习，不要心浮气躁的。——plk
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              [100 challenge Array/List] P1024 Minesweeper | ★ Solution
+            </h2>
+            <div class="post-info">
+              <span>
+                2024-09-12
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+                <a href="https://LinyongGAN.github.io/tag/lUfIhhREV/" class="post-tag">
+                  # 100-challenge
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h3 id="题意">题意</h3>
+<p>雷区有两行，只有第一行有埋雷。现在给定第二行体现出来的周围雷的个数，求方案数。</p>
+<h2 id="思路">思路</h2>
+<p>显然（结合标签也可以看出来）是一道动态规划。动规难的就是状态的构建和转移，真正的代码实现并不复杂。</p>
+<h3 id="动规方程构建">动规方程构建</h3>
+<p>记 <code>dp[i][j]</code> 表示在 i 位置的状态为 j，前 i 个位置有的方案数。其中 j 为状态的代号，对应表如下：{0: .., 1: .*, 2: *., 3: **}。其中 <code>*</code> 为雷， <code>.</code> 为非雷。</p>
+<h3 id="方程初始">方程初始</h3>
+<p><code>dp[0][c] = 1 if c is valid w.r.t A[0] for any c</code><br>
+<code>dp[0][c] = 0 if c is not valid w.r.t A[0] for any c</code></p>
+<h3 id="方程转移">方程转移</h3>
+<p><code>dp[i][c1] += dp[i-1][c2] for any c1, c2 and they are valid w.r.t A, i, c1, c2</code></p>
+<h2 id="代码">代码</h2>
+<pre><code class="language-java">import java.util.Scanner;
+
+public class P1024Minesweeper
+{
+	public static int check_valid_first(int[] A, int i, int c)
+	{
+		if(A[i] == 0 &amp;&amp; c == 0) return 1;
+		if(A[i] == 1 &amp;&amp; (c == 1 || c == 2)) return 1;
+		if(A[i] == 2 &amp;&amp; c == 3) return 1;
+		return 0;
+	}
+	public static int check_valid(int[] A, int i, int c1, int c2)
+	{
+		if(A[i] == 0 &amp;&amp; (c1 == 0 &amp;&amp; c2 == 0)) return 1;
+		if(A[i] == 1 &amp;&amp; ((c1 == 1 &amp;&amp; c2 == 2) || (c1 == 0 &amp;&amp; c2 == 1) || (c1 == 2 &amp;&amp; c2 == 0))) return 1;
+		if(A[i] == 2 &amp;&amp; ((c1 == 3 &amp;&amp; c2 == 2) || (c1 == 2 &amp;&amp; c2 == 1) || (c1 == 1 &amp;&amp; c2 == 3))) return 1;
+		if(A[i] == 3 &amp;&amp; (c1 == 3 &amp;&amp; c2 == 3)) return 1;
+		return 0;
+	}
+	public static void main(String[] args)
+	{
+		Scanner sc = new Scanner(System.in);
+		int n = Integer.parseInt(sc.nextLine());
+		String[] Astr = sc.nextLine().split(&quot; &quot;);
+		int[] A = new int[n];
+		for(int i = 0; i &lt; n; i++)
+			A[i] = Integer.parseInt(Astr[i]);
+
+		int[][] dp = new int[n][4];
+		for(int i = 0; i &lt; 4; i++) dp[0][i] = check_valid_first(A, 0, i);
+		
+		for(int i = 1; i &lt; n; i++)
+			for(int c1 = 0; c1 &lt; 4; c1++)
+				for(int c2 = 0; c2 &lt; 4; c2++)
+					dp[i][c1] += dp[i-1][c2] * check_valid(A, i, c1, c2);
+
+		System.out.println(dp[n-1][0]+dp[n-1][1]+dp[n-1][2]+dp[n-1][3]);
+	}
+}
+</code></pre>
+<h2 id="反思">反思</h2>
+<p>如何设计动规方程？显然会带一个位置信息，一维已经去了，最多还能来一维，而且不能是给位置相关的（不然就开不下了）。<br>
+两种可能性：一是这题真就够了，直接用一个位置转移全；二是还必须要带一个要素，但不能占空间太大。<br>
+显然这题不可能一个位置转移到底，因为这还跟雷的分布有很大的关系。<br>
+很难的一点是如何把A的值和雷的分布去映射起来，而且dp中存的还应该是方案数。单纯的数学好像是不能解决了，所以用函数去判断是不是合法的，或者说是把雷的状态和A对应起来。<br>
+这样看，第二维只需要记录雷的状态就可以了。先考虑只记录当前位置的状态。如果当前位置是雷，但不知道前后的情况，依然不能判断是不是合法，所以重新考虑把前后带进来。因此是记录当前和下一个，一共四种状态。<br>
+这样状态方程就设计出来了。<br>
+至于结论在什么位置，一般是取全部的总和、取全部的最大值或者取最后的状态。方案数想要转移，结果应该就是存在最后一个位置的。</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#%E9%A2%98%E6%84%8F">题意</a></li>
+</ul>
+</li>
+<li><a href="#%E6%80%9D%E8%B7%AF">思路</a>
+<ul>
+<li><a href="#%E5%8A%A8%E8%A7%84%E6%96%B9%E7%A8%8B%E6%9E%84%E5%BB%BA">动规方程构建</a></li>
+<li><a href="#%E6%96%B9%E7%A8%8B%E5%88%9D%E5%A7%8B">方程初始</a></li>
+<li><a href="#%E6%96%B9%E7%A8%8B%E8%BD%AC%E7%A7%BB">方程转移</a></li>
+</ul>
+</li>
+<li><a href="#%E4%BB%A3%E7%A0%81">代码</a></li>
+<li><a href="#%E5%8F%8D%E6%80%9D">反思</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://LinyongGAN.github.io/post/ji-qi-xue-xi-xing-neng-du-liang/">
+              <h3 class="post-title">
+                小专题：机器学习性能度量，从一般到特殊
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: 'Ov23livwm7xHhOMu9p2F',
+    clientSecret: 'b9daf4e310084a62f69a96825d56dbe5e5f9863f',
+    repo: 'linyonggan.github.io',
+    owner: 'linyonggan',
+    admin: ['linyonggan'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank"> Gridea</a>
+  <a class="rss" href="https://LinyongGAN.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,371 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>[100 challenge Array/List] P1214 Haybale Feast | ★ Solution | Linyong GAN</title>
+<link rel="shortcut icon" href="https://LinyongGAN.github.io/favicon.ico?v=1728181861934">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://LinyongGAN.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="[100 challenge Array/List] P1214 Haybale Feast | ★ Solution | Linyong GAN - Atom Feed" href="https://LinyongGAN.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="真丢脸这么简单的题目提交了五次
+一看到farmer John就知道这题肯定是出自USACO了。果不其然，出自USACO 2017的一道G题。
+题意
+有若干个草堆线性排列，每个草堆都有风味F和辣值S两个参数。定义一道菜为连续的一个或若干个草堆..." />
+    <meta name="keywords" content="100-challenge" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://LinyongGAN.github.io">
+  <img class="avatar" src="https://LinyongGAN.github.io/images/avatar.png?v=1728181861934" alt="">
+  </a>
+  <h1 class="site-title">
+    Linyong GAN
+  </h1>
+  <p class="site-description">
+    年轻人，好好学习，不要心浮气躁的。——plk
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              [100 challenge Array/List] P1214 Haybale Feast | ★ Solution
+            </h2>
+            <div class="post-info">
+              <span>
+                2024-09-16
+              </span>
+              <span>
+                7 min read
+              </span>
+              
+                <a href="https://LinyongGAN.github.io/tag/lUfIhhREV/" class="post-tag">
+                  # 100-challenge
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p><s>真丢脸这么简单的题目提交了五次</s><br>
+一看到farmer John就知道这题肯定是出自USACO了。果不其然，出自USACO 2017的一道G题。</p>
+<h2 id="题意">题意</h2>
+<p>有若干个草堆线性排列，每个草堆都有风味F和辣值S两个参数。定义一道菜为连续的一个或若干个草堆，菜的风味值为所有风味的总和，辣值为所有草堆中最大的辣值。求在风味值超出给定的阈值的前提下最小的辣味值。<br>
+注意到F和M的取值，三年oi一场空，不开longlong见祖宗。</p>
+<h2 id="思路">思路</h2>
+<h3 id="朴素的尺取法">朴素的尺取法</h3>
+<p>尺取法又称双指针（2ptr），是两个指针滑动产生的算法，时间复杂度为O(n)。而它最大的优点在于可以快速抛弃后面的，加入前面的，这也是它的要求。因此对于原题中的数组顺序不可改变的、有大量区间异或值、求和、求积的题目，2ptr很有优势。这题涉及到了F求和，因此不妨一试。</p>
+<pre><code class="language-java">import java.util.Scanner;
+
+public class Main
+{
+	public static void main(String[] args)
+	{
+		Scanner sc = new Scanner(System.in);
+		String[] tmp = sc.nextLine().split(&quot; &quot;);
+		if(tmp[0].isEmpty()) tmp = sc.nextLine().split(&quot; &quot;);
+		int n; long m;
+		n = Integer.parseInt(tmp[0]); m = Long.parseLong(tmp[1]);
+		long[] F = new long[n], S = new long[n];
+		for(int i = 0; i &lt; n; i++)
+		{
+			tmp = sc.nextLine().split(&quot; &quot;);
+			if(tmp[0].isEmpty()) tmp = sc.nextLine().split(&quot; &quot;);
+			F[i] = Long.parseLong(tmp[0]); S[i] = Long.parseLong(tmp[1]);
+		}
+        // input over
+		int p, q;
+		p = q = 0;
+		long sum = F[0], g_min = S[0];
+		while(p &lt; n)
+		{
+			if(sum &lt; m)
+			{
+				if(p &lt; n-1) sum += F[++p];
+				else break;
+			}
+			else
+			{
+				long max = S[p];
+				for(int i = q; i &lt;= p; i++)
+					if(S[i] &gt; max)
+						max = S[i];
+				if(max &lt; g_min) g_min = max;
+				if(q &lt; p) sum -= F[q++];
+				else break;
+			}
+		}
+		System.out.println(g_min);
+	}
+}
+</code></pre>
+<p>显然这段代码并不work。虽然在求和方面很有优势，但求最大值最小值方面很不擅长，复杂度是直接O(n)了，那总的复杂度就变成了O(n^2)，是不能满足1e6的数据量的。</p>
+<h3 id="二分法">二分法</h3>
+<p>这题确实不容易想到二分，但单从复杂度上看似乎也能看出一些端倪。二分的复杂度是O(log)级别的，1e6的log也就20左右，再配合一个求min/max总的也只有O(nlogn)，看起来是完全胜任的。<br>
+二分答案的前提是答案是有序的。举例来说，如果答案为10时可以，那么比10小的就一定可以，比10大的就一定不可以。注意这里的充要性。<br>
+仔细想想这道题，答案一定在有限的、给定的S中取，而且是求最小值的，这也就意味着有很大可能性是可以二分的。于是我们写出二分的代码</p>
+<pre><code class="language-cpp">int l = 0, r = n-1, mid;
+while(l &lt; r)
+{
+    mid = (l+r) &gt;&gt; 1;
+    if(check(mid)) // mid 是一个可行解，往小里找
+        r = mid; // 注意到mid是可行解，因此保边界。注意这里的改动导致while的条件发生变化以防止死循环
+    else
+        l = mid + 1;
+}
+</code></pre>
+<p>对于check函数，我们只需要从mid出发，找出两边不超过当前S的部分，只要加起来大于m，就找到了一组最优情况，返回true，如果最后还是没有找到，返回false</p>
+<pre><code class="language-c++">bool check(int mid)
+{
+	int idx = hay[mid].idx;
+	long sum = hay[mid].F;
+	int p = idx+1;
+	while(p &lt; n &amp;&amp; S[p] &lt; hay[mid].S)
+	{
+		sum += F[p++];
+		if(sum &gt;= m)
+			return true;
+	}
+	p = idx-1;
+	while(p &gt;= 0 &amp;&amp; S[p] &lt; hay[mid].S)
+	{
+		sum += F[p--];
+		if(sum &gt;= m)
+			return true;
+	}
+	return false;
+}
+</code></pre>
+<p>交了之后你会发现只有50分。我们不妨再思考一下，这样真的具有单调性吗？举个例子</p>
+<pre><code>3 10
+4 15
+6 10
+10 9
+</code></pre>
+<p>显然，正确答案是9，而且单独一个 <code>10 9</code> 就可以满足题意了。但是，我们会直接枚举到10，竟然发现是不合法的！因为只有4+6才具备效力，根本无法预见到还有F更大S更小的情况。<br>
+那应该怎么办呢？调整check就可以了。check表达为“S不超过二分出来的最大值时能找到的最优方案。”代码如下</p>
+<pre><code class="language-c++">bool check(long max)
+{
+    long sum = 0;
+    for(int i = 0; i &lt; n; i++)
+    {
+        if(S[i] &lt;= max) sum += F[i];
+        else sum = 0;
+        if(sum &gt;= m) return true;
+    }
+    return false;
+}
+</code></pre>
+<p>从而这题就解决了。</p>
+<h3 id="再探尺取法">再探尺取法</h3>
+<p>尺取法真的不可吗？其实未必。尺取法本身的复杂度是O(n)，是求min/max让他的复杂度再乘了一个n，那只需要把后面的那个n降到log n这题就能解决了。那查询最值有什么logn的办法吗？有。st表、QMR。因此很多人拿此题当st表的练手题，这也是评级是绿题的原因。由于st表并不在3100的考察范围内，而且有模板可背，这里就不再赘述了。</p>
+<pre><code class="language-c++">#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+const int N = int(1e5+10);
+
+long F[N], S[N];
+int n;
+long m;
+
+long dp[N][22];
+int Log[N];
+long sum[N];
+
+void init()
+{
+	Log[0]=-1;
+	for(int i=1;i&lt;=n;i++)
+		Log[i]=Log[i&gt;&gt;1]+1;
+	for(int i=0;i&lt;n;i++)
+		dp[i][0]=S[i];
+	for(int j=1;j&lt;=20;j++)
+		for(int i=1;i+(1&lt;&lt;j)-1&lt;=n;i++)
+			dp[i][j]=max(dp[i][j-1],dp[i+(1&lt;&lt;j-1)][j-1]);
+}
+long query(int x,int y)
+{
+	int s=Log[y-x+1];
+	return max(dp[x][s],dp[y-(1&lt;&lt;s)+1][s]);
+}
+int main()
+{
+	scanf(&quot;%d%ld&quot;, &amp;n, &amp;m);
+	for(int i = 0; i &lt; n; i++) scanf(&quot;%ld%ld&quot;, &amp;F[i], &amp;S[i]);
+	sum[0] = F[0];
+	for(int i = 1; i &lt; n; i++) sum[i] = sum[i-1] + F[i];
+	init();
+	int p = 0, q = 0; // p in front; q back
+	long res;
+	for(int i = 0; i &lt; n; i++) res = max(S[i], res);
+	for(q = 0; q &lt; n; q++)
+	{
+		while(p &lt; n &amp;&amp; sum[p]-sum[q-1] &lt; m) p++;
+		if(p &lt; n) res = min(res, query(q, p-1));
+	}
+	printf(&quot;%ld\n&quot;, res);
+	return 0;
+}
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E9%A2%98%E6%84%8F">题意</a></li>
+<li><a href="#%E6%80%9D%E8%B7%AF">思路</a>
+<ul>
+<li><a href="#%E6%9C%B4%E7%B4%A0%E7%9A%84%E5%B0%BA%E5%8F%96%E6%B3%95">朴素的尺取法</a></li>
+<li><a href="#%E4%BA%8C%E5%88%86%E6%B3%95">二分法</a></li>
+<li><a href="#%E5%86%8D%E6%8E%A2%E5%B0%BA%E5%8F%96%E6%B3%95">再探尺取法</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://LinyongGAN.github.io/post/100-challenge-arraylist-p1024-minesweeper-or-solution/">
+              <h3 class="post-title">
+                [100 challenge Array/List] P1024 Minesweeper | ★ Solution
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: 'Ov23livwm7xHhOMu9p2F',
+    clientSecret: 'b9daf4e310084a62f69a96825d56dbe5e5f9863f',
+    repo: 'linyonggan.github.io',
+    owner: 'linyonggan',
+    admin: ['linyonggan'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank"> Gridea</a>
+  <a class="rss" href="https://LinyongGAN.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,608 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Charm of Transformer | Linyong GAN</title>
+<link rel="shortcut icon" href="https://LinyongGAN.github.io/favicon.ico?v=1728181861934">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://LinyongGAN.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="The Charm of Transformer | Linyong GAN - Atom Feed" href="https://LinyongGAN.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="
+a seq2seq model
+widely used in Chatbot, audio generation, machine translation, speech recognition, etc.
+
+Dataloader
+
+Wh..." />
+    <meta name="keywords" content="paper reading" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://LinyongGAN.github.io">
+  <img class="avatar" src="https://LinyongGAN.github.io/images/avatar.png?v=1728181861934" alt="">
+  </a>
+  <h1 class="site-title">
+    Linyong GAN
+  </h1>
+  <p class="site-description">
+    年轻人，好好学习，不要心浮气躁的。——plk
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              The Charm of Transformer
+            </h2>
+            <div class="post-info">
+              <span>
+                2024-07-03
+              </span>
+              <span>
+                14 min read
+              </span>
+              
+                <a href="https://LinyongGAN.github.io/tag/ZtpCGHj50/" class="post-tag">
+                  # paper reading
+                </a>
+              
+            </div>
+            
+              <img class="post-feature-image" src="https://LinyongGAN.github.io/post-images/bian-xing-jin-gang-de-mei-li-the-charm-of-transformer.jpeg" alt="">
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <blockquote>
+<p>a seq2seq model</p>
+<p>widely used in Chatbot, audio generation, machine translation, speech recognition, etc.</p>
+</blockquote>
+<h1 id="dataloader">Dataloader</h1>
+<blockquote>
+<p>What does the data stored look like? How to transform Dataset into Dataloader?</p>
+</blockquote>
+<h2 id="step-0-dataset">Step 0: Dataset</h2>
+<p>The datasets are two .txt files. One is in English and another is in French. They are the same length and show the same meaning for the same sentence.<br>
+<strong>Please note that there exist several typos intentionally, to strengthen the robustness of learning.</strong></p>
+<h2 id="step-1-tokenize">Step 1: Tokenize</h2>
+<p>We use a pre-trained library &quot;Spacy&quot; as the tokenizer to separate each sentence into words.</p>
+<h2 id="step-2-discretize">Step 2: Discretize</h2>
+<p>map each word (including punctuation) into a unique index.</p>
+<p>Notice that: here we introduce 4 special &quot;words&quot;:</p>
+<table>
+<thead>
+<tr>
+<th>idx</th>
+<th>symble</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>&lt;pad&gt;</td>
+<td>filling positions that are empty</td>
+</tr>
+<tr>
+<td>1</td>
+<td>&lt;unk&gt;</td>
+<td>Unknown words</td>
+</tr>
+<tr>
+<td>2</td>
+<td>&lt;sos&gt;</td>
+<td>Start of Sentence</td>
+</tr>
+<tr>
+<td>3</td>
+<td>&lt;eos&gt;</td>
+<td>End of Sentence</td>
+</tr>
+</tbody>
+</table>
+<p>Only output languages are required to use &lt;sos&gt; and &lt;eos&gt; since they are expected as the output of the machine.</p>
+<p>And finally, tensorize them in units of sentences without any other processing.</p>
+<h2 id="step-4-dataloader">Step 4: Dataloader</h2>
+<ol>
+<li>construct a <strong>Dataset</strong>.<br>
+Here we design the Dataset as a list:<br>
+[{&quot;src&quot;: [first sentence in tensor], &quot;tgt&quot;: [first sentence in tensor]},<br>
+{&quot;src&quot;: [second sentence in tensor], &quot;tgt&quot;: [second sentence in tensor]},<br>
+...]<br>
+and plug it into the Standardized Dataset inherited from torch.utils.data. So, the codes are as follows:</li>
+</ol>
+<pre><code class="language-python">from torch.utils.data import Dataset
+
+class MyDataset(Dataset):
+    def __init__(self, data_list):
+        self.data = data_list
+    
+    def __getitem__(self, index):
+        return self.data[index]
+
+    def __len__(self):
+        return len(self.data)
+
+dataset = MyDataset(data_dict)
+</code></pre>
+<p>Please note that function <code>__init__()</code> and <code>__getitem__()</code> have to be overrided but <code>__len__()</code> is not necessary. These three constructive functions tell the machine how the data is stored, how to get items via index and the length of the dataset.</p>
+<ol start="2">
+<li>Construct a <strong>DataLoader</strong><br>
+The initialization of DataLoader could accept 14 parameters but only 5 are necessary in this example:</li>
+</ol>
+<pre><code class="language-python">dataloader = DataLoader(dataset, batch_size=batch_size,collate_fn=custom_collate, num_workers=4, shuffle=True)
+
+return dataloader
+</code></pre>
+<p>Here, <code>custom_collate(batch)</code> is a function for padding.<br>
+name: custom_collate<br>
+input: whole dataset<br>
+output: whole dataset<br>
+function: make all the sentences in the dataset share the same length. If it's not the longest sentence, add &quot;&lt;pad&gt;&quot; after the sentence.</p>
+<p>shuffle=True: the data in every batch would be different to lessen the situation of overfit.</p>
+<h2 id="visit-dataloader">visit Dataloader</h2>
+<pre><code class="language-python">for batch in dataloader:
+    src = batch[&quot;src&quot;]; tgt = batch[&quot;tgt&quot;]
+</code></pre>
+<p>Just regard <code>dataloader</code> as a normal list.</p>
+<h1 id="training-is-the-process-of-prediction">Training is the process of prediction</h1>
+<p>For any training process, feed in original data and <strong>predict</strong> output through our model and calculate the <strong>loss</strong> between outputs and true labels. Finally <strong>Back-propagation</strong> and modify parameters in models.</p>
+<h2 id="code-template-for-training-process">Code template for training process</h2>
+<pre><code class="language-python">import torch.optim as optim
+import torch.nn.functional as F
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+for epoch in range(epoches):
+    epoch_loss=step=0
+    for batch in tqdm(dataloader, desc = f'[{epoch}/{epoches}] training... '):
+        pred = model(batch)
+        loss = ___certain_loss_function__(pred, tgt)
+        loss.backward()
+        optimizer.step()
+        epoch_loss += loss.item()
+        step += 1
+    print(f&quot;[{epoch}/{epoches}] training loss: {epoch_loss/step}&quot;)
+</code></pre>
+<h3 id="use-cross-entropy-to-evaluate-the-loss">Use cross-entropy to evaluate the loss</h3>
+<p>We have formula: Cross Entropy <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>C</mi><mo>(</mo><mi>f</mi><mo>(</mo><msup><mi>x</mi><mi>n</mi></msup><mo>)</mo><mo separator="true">,</mo><msup><mover accent="true"><mi>y</mi><mo>^</mo></mover><mi>n</mi></msup><mo>)</mo><mo>=</mo><mo>−</mo><mo>[</mo><msup><mover accent="true"><mi>y</mi><mo>^</mo></mover><mi>n</mi></msup><mi>ln</mi><mo>⁡</mo><mi>f</mi><mo>(</mo><msup><mi>x</mi><mi>n</mi></msup><mo>)</mo><mo>+</mo><mo>(</mo><mn>1</mn><mo>−</mo><msup><mover accent="true"><mi>y</mi><mo>^</mo></mover><mi>n</mi></msup><mo>)</mo><mo>(</mo><mn>1</mn><mo>−</mo><mi>ln</mi><mo>⁡</mo><mi>f</mi><mo>(</mo><msup><mi>x</mi><mi>n</mi></msup><mo>)</mo><mo>)</mo><mo>]</mo></mrow><annotation encoding="application/x-tex">C(f(x^n), \hat{y}^n) = -[\hat{y}^n \ln f(x^n) + (1-\hat{y}^n)(1-\ln f(x^n))]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.07153em;">C</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">n</span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.19444em;">^</span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.19444em;"><span></span></span></span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">n</span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">−</span><span class="mopen">[</span><span class="mord"><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.19444em;">^</span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.19444em;"><span></span></span></span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">n</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop">ln</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">n</span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.19444em;">^</span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.19444em;"><span></span></span></span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">n</span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">ln</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">n</span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mclose">)</span><span class="mclose">]</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>l</mi><mi>o</mi><mi>s</mi><mi>s</mi><mo>=</mo><msub><mi mathvariant="normal">Σ</mi><mi>n</mi></msub><mi>C</mi><mo>(</mo><mi>f</mi><mo>(</mo><msup><mi>x</mi><mi>n</mi></msup><mo>)</mo><mo separator="true">,</mo><msup><mover accent="true"><mi>y</mi><mo>^</mo></mover><mi>n</mi></msup><mo>)</mo></mrow><annotation encoding="application/x-tex">loss = \Sigma _n C(f(x^n), \hat{y}^n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">o</span><span class="mord mathdefault">s</span><span class="mord mathdefault">s</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord">Σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.07153em;">C</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">n</span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.19444em;">^</span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.19444em;"><span></span></span></span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">n</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></p>
+<p>Also, in <code>torch.nn.functional</code>, we have function <code>cross_entropy()</code>.<br>
+Input: a probability torch list and a target list. The prior is 2-D with possibilty distribution of each word. The second is 1-D with the target.<br>
+Output: Cross entropy<br>
+Function: First calculate softmax for prior and calculate cross entropy.<br>
+Example:</p>
+<pre><code class="language-python">logits = torch.tensor([[2.0, 1.0, 0.1], [0.1, 3.0, 0.2]])
+targets = torch.tensor([0, 2]) # equivalent to [[1., 0., 0.], [0., 0., 1.]]
+loss = F.cross_entropy(logits, targets)
+print(loss)
+</code></pre>
+<p>output: 1.277</p>
+<p>Please refers to Machine Learning Hung-Yi Lee P17: Logistic Regression</p>
+<h1 id="model-construction">Model Construction</h1>
+<figure data-type="image" tabindex="1"><img src="https://LinyongGAN.github.io/post-images/1719904243862.jpg" alt="Modeling Structure" loading="lazy"></figure>
+<ul>
+<li>For more details, please read original paper &quot;Attention is all you need&quot;.</li>
+</ul>
+<p>Transformer is the combination of Encoder and Decoder.</p>
+<p><code>Encoder</code> and <code>Decoder</code> are two seperate parts that can be used. In Inference, Encoder will output some result and input into Decoder, then derive the answer.<br>
+However, in training, the result from Encoder is not steady. Therefore, we decide to show Decoder the correct answer (namely target).</p>
+<h3 id="decoder-an-autoregressive-model">Decoder: an Autoregressive Model</h3>
+<p><strong>process</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>idx</th>
+<th>Input</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>&lt;sos&gt;</td>
+<td>&lt;sos&gt;机</td>
+</tr>
+<tr>
+<td>2</td>
+<td>&lt;sos&gt;机</td>
+<td>&lt;sos&gt;机器</td>
+</tr>
+<tr>
+<td>3</td>
+<td>&lt;sos&gt;机器</td>
+<td>&lt;sos&gt;机器学</td>
+</tr>
+<tr>
+<td>4</td>
+<td>&lt;sos&gt;机器学</td>
+<td>&lt;sos&gt;机器学习</td>
+</tr>
+<tr>
+<td>5</td>
+<td>&lt;sos&gt;机器学习</td>
+<td>&lt;sos&gt;机器学习&lt;eos&gt;</td>
+</tr>
+</tbody>
+</table>
+<p>Most important part in Transformer is Attention Machanism.</p>
+<h2 id="attention-is-all-you-need">Attention is all you need</h2>
+<figure data-type="image" tabindex="2"><img src="https://LinyongGAN.github.io/post-images/1719916084455.jpg" alt="Attention Machanism" loading="lazy"></figure>
+<h3 id="what-is-attention-machanism">What is Attention machanism?</h3>
+<blockquote>
+<p>Self-attention, sometimes called intra-attention is an attention mechanism relating different positions of a single sequence in order to compute a representation of the sequence. Self-attention has been used successfully in a variety of tasks including reading comprehension, abstractive summarization, textual entailment and learning task-independent sentence representations. (Google, 2023, Attention is all you need, part 2. Background)</p>
+</blockquote>
+<p>Here, we named <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.0037em;">α</span></span></span></span> as attention scores.<br>
+The most magic part of Attention Machanism is that: for a better calculation for computer (or say GPU), it could be transformed into matrix Multiplication.</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>Q</mi><mo>=</mo><msup><mi>W</mi><mi>q</mi></msup><mi>X</mi><mo separator="true">,</mo><mi>K</mi><mo>=</mo><msup><mi>W</mi><mi>k</mi></msup><mi>X</mi><mo separator="true">,</mo><mi>V</mi><mo>=</mo><msup><mi>W</mi><mi>v</mi></msup><mi>X</mi></mrow><annotation encoding="application/x-tex">Q = W^q X, K= W^k X,  V = W^v X
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">Q</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.9088320000000001em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.714392em;"><span style="top:-3.1130000000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">q</span></span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.07847em;">X</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.07153em;">K</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.093548em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8991079999999999em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.07847em;">X</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.22222em;">V</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.7143919999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7143919999999999em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">v</span></span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.07847em;">X</span></span></span></span></span></p>
+<p>where <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>W</mi><mi>q</mi></msup></mrow><annotation encoding="application/x-tex">W^q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">q</span></span></span></span></span></span></span></span></span></span></span> and so on could be represented as <strong>Linear Layers</strong>, which are equivalent to <strong>Matrix Multiplication</strong></p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>α</mi><mo>=</mo><mi>Q</mi><msup><mi>K</mi><mi>T</mi></msup><mo separator="true">,</mo><mtext> </mtext><mi>A</mi><mo>=</mo><mi>s</mi><mi>o</mi><mi>f</mi><mi>t</mi><mi>m</mi><mi>a</mi><mi>x</mi><mo>(</mo><mi>α</mi><mo>)</mo><mo separator="true">,</mo><mtext> </mtext><mi>B</mi><mo>=</mo><mi>A</mi><mi>V</mi></mrow><annotation encoding="application/x-tex">\alpha = Q K^T,\ A = softmax(\alpha),\ B = AV
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.0857709999999998em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">Q</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8913309999999999em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mspace"> </span><span class="mord mathdefault">A</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault">s</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="mord mathdefault">t</span><span class="mord mathdefault">m</span><span class="mord mathdefault">a</span><span class="mord mathdefault">x</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mspace"> </span><span class="mord mathdefault" style="margin-right:0.05017em;">B</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault">A</span><span class="mord mathdefault" style="margin-right:0.22222em;">V</span></span></span></span></span></p>
+<p>and B would be the output.</p>
+<h3 id="why-it-works">Why it works?</h3>
+<p>For every position, softmaxed attention scores <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>α</mi><mrow><mi>p</mi><mi>o</mi><mi>s</mi><mo separator="true">,</mo><mi>i</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\alpha_{pos, i}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.716668em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">p</span><span class="mord mathdefault mtight">o</span><span class="mord mathdefault mtight">s</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> refers to how important position <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.65952em;vertical-align:0em;"></span><span class="mord mathdefault">i</span></span></span></span> influence position <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>p</mi><mi>o</mi><mi>s</mi></mrow><annotation encoding="application/x-tex">pos</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">p</span><span class="mord mathdefault">o</span><span class="mord mathdefault">s</span></span></span></span>. The larger the scores is, the more important it is.<br>
+And then, output <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>B</mi></mrow><annotation encoding="application/x-tex">B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.05017em;">B</span></span></span></span> is the linear combination of <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>V</mi></mrow><annotation encoding="application/x-tex">V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.22222em;">V</span></span></span></span>.</p>
+<p>Compared with <strong>CNN</strong>, obviously Attention Machanism is better. Receptive Field in CNN is determined by layer designer and mostly has to be rectangular. However, <strong>Attention Machanism</strong> could derive the receptive field itself. And always derives better solution than human chooses.</p>
+<h3 id="whats-different-of-multihead-attention">What's different of Multihead Attention?</h3>
+<blockquote>
+<p>Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions. With a single attention head, averaging inhibits this.</p>
+</blockquote>
+<h2 id="data-before-enter-the-models">Data before enter the models</h2>
+<table>
+<thead>
+<tr>
+<th>Period</th>
+<th>type</th>
+<th>shape</th>
+<th>demo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>every batch</td>
+<td>string list</td>
+<td>max seq len <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>×</mo></mrow><annotation encoding="application/x-tex">\times</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.66666em;vertical-align:-0.08333em;"></span><span class="mord">×</span></span></span></span> 1</td>
+<td>[&quot;Machine&quot;, &quot;Learning&quot;, &quot;!&quot;]</td>
+</tr>
+<tr>
+<td>index torch</td>
+<td>tensor list</td>
+<td><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>m</mi><mi>a</mi><mi>x</mi><mtext> </mtext><mi>s</mi><mi>e</mi><mi>q</mi><mtext> </mtext><mi>l</mi><mi>e</mi><mi>n</mi><mo>×</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">max\ seq\ len \times 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">m</span><span class="mord mathdefault">a</span><span class="mord mathdefault">x</span><span class="mspace"> </span><span class="mord mathdefault">s</span><span class="mord mathdefault">e</span><span class="mord mathdefault" style="margin-right:0.03588em;">q</span><span class="mspace"> </span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">e</span><span class="mord mathdefault">n</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span></td>
+<td>[tensor([4.]), tensor([5.]), tensor([6.]), tensor([7.])]</td>
+</tr>
+<tr>
+<td>embedding</td>
+<td>tensor matrix</td>
+<td><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>m</mi><mi>a</mi><mi>x</mi><mtext> </mtext><mi>s</mi><mi>e</mi><mi>q</mi><mtext> </mtext><mi>l</mi><mi>e</mi><mi>n</mi><mo>×</mo><msub><mi>d</mi><mrow><mi>m</mi><mi>o</mi><mi>d</mi><mi>e</mi><mi>l</mi></mrow></msub></mrow><annotation encoding="application/x-tex">max\ seq\ len \times d_{model}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">m</span><span class="mord mathdefault">a</span><span class="mord mathdefault">x</span><span class="mspace"> </span><span class="mord mathdefault">s</span><span class="mord mathdefault">e</span><span class="mord mathdefault" style="margin-right:0.03588em;">q</span><span class="mspace"> </span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">e</span><span class="mord mathdefault">n</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">m</span><span class="mord mathdefault mtight">o</span><span class="mord mathdefault mtight">d</span><span class="mord mathdefault mtight">e</span><span class="mord mathdefault mtight" style="margin-right:0.01968em;">l</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></td>
+<td>[tensor([0.5, 0.8, ...]), ...]</td>
+</tr>
+<tr>
+<td>Output</td>
+<td>probability list</td>
+<td><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>m</mi><mi>a</mi><mi>x</mi><mtext> </mtext><mi>s</mi><mi>e</mi><mi>q</mi><mtext> </mtext><mi>l</mi><mi>e</mi><mi>n</mi><mo>×</mo><mi>v</mi><mi>o</mi><mi>c</mi><mi>a</mi><mi>b</mi><mtext> </mtext><mi>s</mi><mi>i</mi><mi>z</mi><mi>e</mi></mrow><annotation encoding="application/x-tex">max\ seq\ len \times vocab\ size</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">m</span><span class="mord mathdefault">a</span><span class="mord mathdefault">x</span><span class="mspace"> </span><span class="mord mathdefault">s</span><span class="mord mathdefault">e</span><span class="mord mathdefault" style="margin-right:0.03588em;">q</span><span class="mspace"> </span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">e</span><span class="mord mathdefault">n</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="mord mathdefault">o</span><span class="mord mathdefault">c</span><span class="mord mathdefault">a</span><span class="mord mathdefault">b</span><span class="mspace"> </span><span class="mord mathdefault">s</span><span class="mord mathdefault">i</span><span class="mord mathdefault" style="margin-right:0.04398em;">z</span><span class="mord mathdefault">e</span></span></span></span></td>
+<td>[{&quot;机&quot;:0.9, &quot;器&quot;: 0.5, &quot;学&quot;: 0.3, &quot;习&quot;:0.1, &lt;sos&gt;: 0.1, <eos>: 0.1}, ...]</td>
+</tr>
+</tbody>
+</table>
+<h2 id="embedding-is-derived-from-training">Embedding is derived from training</h2>
+<p><code>Embedding</code> is a way for computer to understand words' meanings. By computing cosine-similarity of word embedding, we can know the relationship between words.</p>
+<p>Usually, it is updating while training. It's the first layer of network.</p>
+<p><code>nn.Embedding</code> has already implemented it.</p>
+<pre><code class="language-python">self.embed = nn.Embedding(n_vocabulary, embedding_size) # (vocab_sz, d_model)
+</code></pre>
+<ul>
+<li>Also, there are other word2vec models such as cbow and N-gram. I wouldn't talk them here.</li>
+</ul>
+<h2 id="positional-encoding-tells-the-positional-information">Positional Encoding tells the positional information</h2>
+<blockquote>
+<p>Why do we need this?</p>
+</blockquote>
+<p>Since the inputs flocks into Decoder at the same time, however, it should have an order. Therefore, we want to develop an encoding that is related to position so that the machine could also consider it.</p>
+<p>If we directly use [1, 2, 3, 4, 5, ...] and encounter two sequences with different lengths, it'll meet some matter. Also, for those words occur later, the weight would too large.<br>
+So we considering designing it periodically and bounded.</p>
+<p>Now, we denote</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo separator="true">,</mo><mn>2</mn><mi>i</mi><mo>)</mo><mo>=</mo><mi>sin</mi><mo>⁡</mo><mo>(</mo><msub><mi>ω</mi><mi>i</mi></msub><mi>p</mi><mo>)</mo><mo separator="true">,</mo><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo separator="true">,</mo><mn>2</mn><mi>i</mi><mo>+</mo><mn>1</mn><mo>)</mo><mo>=</mo><mi>cos</mi><mo>⁡</mo><mo>(</mo><msub><mi>ω</mi><mi>i</mi></msub><mi>p</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">PE(p, 2i) = \sin(\omega _i p), PE(p, 2i+1) = \cos (\omega _i p)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mord mathdefault">i</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">sin</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">ω</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathdefault">p</span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mord mathdefault">i</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">cos</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">ω</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathdefault">p</span><span class="mclose">)</span></span></span></span></span></p>
+<p>where <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>ω</mi><mi>i</mi></msub><mo>=</mo><mn>1000</mn><msup><mn>0</mn><mfrac><mrow><mn>2</mn><mi>i</mi></mrow><msub><mi>d</mi><mrow><mi>m</mi><mi>o</mi><mi>d</mi><mi>e</mi><mi>l</mi></mrow></msub></mfrac></msup></mrow><annotation encoding="application/x-tex">\omega _i = 10000^{\frac{2i}{d_{model}}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">ω</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.1219299999999999em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord">0</span><span class="mord">0</span><span class="mord">0</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:1.1219299999999999em;"><span style="top:-3.5233700000000003em;margin-right:0.05em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mopen nulldelimiter sizing reset-size3 size6"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8550857142857142em;"><span style="top:-2.656em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3448em;margin-left:0em;margin-right:0.1em;"><span class="pstrut" style="height:2.69444em;"></span><span class="mord mtight"><span class="mord mathdefault mtight">m</span><span class="mord mathdefault mtight">o</span><span class="mord mathdefault mtight">d</span><span class="mord mathdefault mtight">e</span><span class="mord mathdefault mtight" style="margin-right:0.01968em;">l</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.34963999999999995em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.2255000000000003em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line mtight" style="border-bottom-width:0.049em;"></span></span><span style="top:-3.384em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.5937428571428571em;"><span></span></span></span></span></span><span class="mclose nulldelimiter sizing reset-size3 size6"></span></span></span></span></span></span></span></span></span></span></span></span></span>. Obviously, for the same layer, the angular velocity <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ω</mi></mrow><annotation encoding="application/x-tex">\omega</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">ω</span></span></span></span> are the same.</p>
+<p>The most wonderful part is that <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo>+</mo><mi>k</mi><mo separator="true">,</mo><mn>2</mn><mi>i</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">PE(p+k, 2i)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mord mathdefault">i</span><span class="mclose">)</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo>+</mo><mi>k</mi><mo separator="true">,</mo><mn>2</mn><mi>i</mi><mo>+</mo><mn>1</mn><mo>)</mo></mrow><annotation encoding="application/x-tex">PE(p+k, 2i+1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mord mathdefault">i</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span> are linear combinations of <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo separator="true">,</mo><mn>2</mn><mi>i</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">PE(p, 2i)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mord mathdefault">i</span><span class="mclose">)</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo separator="true">,</mo><mn>2</mn><mi>i</mi><mo>+</mo><mi>i</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">PE(p, 2i+i)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mord mathdefault">i</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault">i</span><span class="mclose">)</span></span></span></span>. Proof as follows.</p>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo>+</mo><mi>k</mi><mo separator="true">,</mo><mn>2</mn><mi>i</mi><mo>)</mo><mo>=</mo><mi>sin</mi><mo>⁡</mo><mo>(</mo><msub><mi>ω</mi><mi>i</mi></msub><mo>(</mo><mi>p</mi><mo>+</mo><mi>k</mi><mo>)</mo><mo>)</mo><mo>=</mo><mi>sin</mi><mo>⁡</mo><mo>(</mo><msub><mi>ω</mi><mi>i</mi></msub><mi>p</mi><mo>)</mo><mi>cos</mi><mo>⁡</mo><mo>(</mo><msub><mi>ω</mi><mi>i</mi></msub><mi>k</mi><mo>)</mo><mo>+</mo><mi>cos</mi><mo>⁡</mo><mo>(</mo><msub><mi>ω</mi><mi>i</mi></msub><mi>p</mi><mo>)</mo><mi>sin</mi><mo>⁡</mo><mo>(</mo><msub><mi>ω</mi><mi>i</mi></msub><mi>k</mi><mo>)</mo><mo>=</mo><mi>cos</mi><mo>⁡</mo><mo>(</mo><msub><mi>ω</mi><mi>i</mi></msub><mi>k</mi><mo>)</mo><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo separator="true">,</mo><mn>2</mn><mi>i</mi><mo>)</mo><mo>+</mo><mi>sin</mi><mo>⁡</mo><mo>(</mo><msub><mi>ω</mi><mi>i</mi></msub><mi>k</mi><mo>)</mo><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo separator="true">,</mo><mn>2</mn><mi>i</mi><mo>+</mo><mn>1</mn><mo>)</mo></mrow><annotation encoding="application/x-tex">PE(p+k, 2i) = \sin(\omega _i (p+k)) = \sin(\omega _i p)\cos(\omega _i k) + \cos(\omega _i p)\sin(\omega _i k) =\cos(\omega _i k)PE(p, 2i) + \sin(\omega _i k)PE(p, 2i+1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mord mathdefault">i</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">sin</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">ω</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mclose">)</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">sin</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">ω</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathdefault">p</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop">cos</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">ω</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">cos</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">ω</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathdefault">p</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop">sin</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">ω</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">cos</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">ω</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mclose">)</span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mord mathdefault">i</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">sin</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">ω</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mclose">)</span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mord mathdefault">i</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span></p>
+<p>Now we denote</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>u</mi><mo>=</mo><mi>cos</mi><mo>⁡</mo><mo>(</mo><msub><mi>ω</mi><mi>i</mi></msub><mi>k</mi><mo>)</mo><mo separator="true">,</mo><mi>v</mi><mo>=</mo><mi>sin</mi><mo>⁡</mo><mo>(</mo><msub><mi>ω</mi><mi>i</mi></msub><mi>k</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">u = \cos(\omega _i k), v = \sin(\omega _i k)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">u</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">cos</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">ω</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">sin</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">ω</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mclose">)</span></span></span></span></span></p>
+<p>Obviously, they are constant since <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span></span></span></span> is a constant.</p>
+<p>Therefore,</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mrow><mo fence="true">[</mo><mtable><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo>+</mo><mi>k</mi><mo separator="true">,</mo><mn>2</mn><mi>i</mi><mo>)</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo>+</mo><mi>k</mi><mo separator="true">,</mo><mn>2</mn><mi>i</mi><mo>+</mo><mn>1</mn><mo>)</mo></mrow></mstyle></mtd></mtr></mtable><mo fence="true">]</mo></mrow><mo>=</mo><mrow><mo fence="true">[</mo><mtable><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>u</mi></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>v</mi></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mo>−</mo><mi>v</mi></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>u</mi></mstyle></mtd></mtr></mtable><mo fence="true">]</mo></mrow><mrow><mo fence="true">[</mo><mtable><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo separator="true">,</mo><mn>2</mn><mi>i</mi><mo>)</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo separator="true">,</mo><mn>2</mn><mi>i</mi><mo>+</mo><mn>1</mn><mo>)</mo></mrow></mstyle></mtd></mtr></mtable><mo fence="true">]</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{bmatrix}
+  PE(p+k, 2i) \\
+  PE(p+k, 2i+1)
+\end{bmatrix} =
+ \begin{bmatrix}
+ u &amp; v \\
+-v &amp; u
+ \end{bmatrix}
+ \begin{bmatrix}
+ PE(p, 2i)\\
+ PE(p, 2i+1)
+\end{bmatrix}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.40003em;vertical-align:-0.95003em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">[</span></span><span class="mord"><span class="mtable"><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mord mathdefault">i</span><span class="mclose">)</span></span></span><span style="top:-2.4099999999999997em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mord mathdefault">i</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9500000000000004em;"><span></span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">]</span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.40003em;vertical-align:-0.95003em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">[</span></span><span class="mord"><span class="mtable"><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">u</span></span></span><span style="top:-2.4099999999999997em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">−</span><span class="mord mathdefault" style="margin-right:0.03588em;">v</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9500000000000004em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:0.5em;"></span><span class="arraycolsep" style="width:0.5em;"></span><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">v</span></span></span><span style="top:-2.4099999999999997em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">u</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9500000000000004em;"><span></span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">]</span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">[</span></span><span class="mord"><span class="mtable"><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mord mathdefault">i</span><span class="mclose">)</span></span></span><span style="top:-2.4099999999999997em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mord mathdefault">i</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9500000000000004em;"><span></span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">]</span></span></span></span></span></span></span></p>
+<p>(Markov Chain)</p>
+<p>Pros:</p>
+<ol>
+<li>As frequency are always different in different layers, if the length is not too large, the positional encoding is unique.</li>
+<li><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo>+</mo><mi>k</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">PE(p+k)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mclose">)</span></span></span></span> could be represented by <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>P</mi><mi>E</mi><mo>(</mo><mi>p</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">PE(p)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord mathdefault">p</span><span class="mclose">)</span></span></span></span> linearly, which will reduce the computing complexity a lot.</li>
+</ol>
+<h2 id="the-mask-is-an-upper-triangular">The mask is an upper triangular</h2>
+<p>Firstly, we should cover all the 0s as they are not words.</p>
+<p>Secondly, especially for those input into Decoder, we have an upper triangular mask.<br>
+<strong>process</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>idx</th>
+<th>Input</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>&lt;sos&gt;</td>
+<td>&lt;sos&gt;机</td>
+</tr>
+<tr>
+<td>2</td>
+<td>&lt;sos&gt;机</td>
+<td>&lt;sos&gt;机器</td>
+</tr>
+<tr>
+<td>3</td>
+<td>&lt;sos&gt;机器</td>
+<td>&lt;sos&gt;机器学</td>
+</tr>
+<tr>
+<td>4</td>
+<td>&lt;sos&gt;机器学</td>
+<td>&lt;sos&gt;机器学习</td>
+</tr>
+<tr>
+<td>5</td>
+<td>&lt;sos&gt;机器学习</td>
+<td>&lt;sos&gt;机器学习&lt;eos&gt;</td>
+</tr>
+</tbody>
+</table>
+<p>According to the process, the input is generate one by one. However, target has already formed. Therefore, we should construct an upper triangular matrix to cover the parts that we don't want.</p>
+<h2 id="appendix-code-template-for-model-construction">Appendix: Code template for Model Construction</h2>
+<pre><code class="language-python">import torch.nn.functional as F
+import torch.nn as nn
+
+class FeedForward(nn.Module):
+    def __init__(self, d_model, d_ff=2048, dropout=0.1):
+        super().__init__()
+        self.linear_1 = nn.Linear(d_model, d_ff)
+        self.dropout = nn.Dropout(dropout)
+        self.linear_2 = nn.Linear(d_ff, d_model)
+    def forward(self, x):
+        x = self.linear_1(x)
+        x = F.relu(x)
+        x = self.dropout(x)
+        x = self.linear_2(x)
+        return x
+</code></pre>
+<p>After inheriting <code>nn.Module</code>, you have to override 2 functions: <code>__init__()</code> and <code>forward()</code>.<br>
+If you want to know the structure or parameters in the model, just <code>print(model)</code> and witness the structure.</p>
+<p>Please note that in <code>forward</code>, we can't use <code>+=</code>. Although the variable name are the same, they have different versions and iterating once and once again.</p>
+<h1 id="inference">Inference</h1>
+<p>Almost the same as training except for:</p>
+<ol>
+<li>input of decoder is the output of encoder, rather than ground truth.</li>
+<li>running the whole model again.</li>
+</ol>
+<h1 id="follow-the-paper-evaluation-the-model">Follow the paper: Evaluation the Model</h1>
+<h2 id="qualitative-analysis-why-self-attention">Qualitative analysis: why self-attention?</h2>
+<ol>
+<li>The total computational complexity per layer.</li>
+<li>the amount of computation that can be parallelized, as measured by the minimum number of sequential operations required.</li>
+<li>The path length between long-range dependencies in the network.</li>
+</ol>
+<h2 id="quantitative-analysis-introduction-to-evaluation-metrics">Quantitative analysis: Introduction to Evaluation Metrics</h2>
+<p>I'll introduce them later. I prefer to learn more related to audio.</p>
+<h1 id="references">References</h1>
+<p>Vaswani, A. et al., 2023, <a href="https://arxiv.org/abs/1706.03762">Attention is all you need</a></p>
+<p>Chen, A. 2021, <a href="https://mp.weixin.qq.com/s?__biz=MzIyNjM2MzQyNg==&amp;mid=2247583661&amp;idx=1&amp;sn=6f37e11e84c4b5627020ae005472b424&amp;chksm=e87256e0df05dff60c0ed10af077b253883ed24e326d0a888ba76e4bcf0240f75ee0bbd89020">面经：什么是Transformer位置编码？</a></p>
+<p>342215448, 2024, <a href="https://github.com/342215448/Transformer_pytorch_machineTranslation">Transformer pytorch machine Translation</a></p>
+<p>神洛, 2023, <a href="https://zhuanlan.zhihu.com/p/639275011">Transformer代码解读</a></p>
+<p>Hung-Yi Lee, 2022, Introduction to Machine Learning</p>
+<p>top_小酱油, 2020, <a href="https://www.jianshu.com/p/63e7acc5e890">通俗讲解pytorch中nn.Embedding原理及使用</a></p>
+<p>关嘉峪, 2024, <a href="https://zhuanlan.zhihu.com/p/689369407">Transformer模型入门-机器翻译</a></p>
+<p>Hunter Phillips, 2023, <a href="https://medium.com/@hunter-j-phillips/putting-it-all-together-the-implemented-transformer-bfb11ac1ddfe">Putting it All Together: The Implemented Transformer</a></p>
+<p>https://blog.csdn.net/u010366748/article/details/111269231</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#dataloader">Dataloader</a>
+<ul>
+<li><a href="#step-0-dataset">Step 0: Dataset</a></li>
+<li><a href="#step-1-tokenize">Step 1: Tokenize</a></li>
+<li><a href="#step-2-discretize">Step 2: Discretize</a></li>
+<li><a href="#step-4-dataloader">Step 4: Dataloader</a></li>
+<li><a href="#visit-dataloader">visit Dataloader</a></li>
+</ul>
+</li>
+<li><a href="#training-is-the-process-of-prediction">Training is the process of prediction</a>
+<ul>
+<li><a href="#code-template-for-training-process">Code template for training process</a>
+<ul>
+<li><a href="#use-cross-entropy-to-evaluate-the-loss">Use cross-entropy to evaluate the loss</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#model-construction">Model Construction</a><br>
+*
+<ul>
+<li><a href="#decoder-an-autoregressive-model">Decoder: an Autoregressive Model</a></li>
+<li><a href="#attention-is-all-you-need">Attention is all you need</a>
+<ul>
+<li><a href="#what-is-attention-machanism">What is Attention machanism?</a></li>
+<li><a href="#why-it-works">Why it works?</a></li>
+<li><a href="#whats-different-of-multihead-attention">What's different of Multihead Attention?</a></li>
+</ul>
+</li>
+<li><a href="#data-before-enter-the-models">Data before enter the models</a></li>
+<li><a href="#embedding-is-derived-from-training">Embedding is derived from training</a></li>
+<li><a href="#positional-encoding-tells-the-positional-information">Positional Encoding tells the positional information</a></li>
+<li><a href="#the-mask-is-an-upper-triangular">The mask is an upper triangular</a></li>
+<li><a href="#appendix-code-template-for-model-construction">Appendix: Code template for Model Construction</a></li>
+</ul>
+</li>
+<li><a href="#inference">Inference</a></li>
+<li><a href="#follow-the-paper-evaluation-the-model">Follow the paper: Evaluation the Model</a>
+<ul>
+<li><a href="#qualitative-analysis-why-self-attention">Qualitative analysis: why self-attention?</a></li>
+<li><a href="#quantitative-analysis-introduction-to-evaluation-metrics">Quantitative analysis: Introduction to Evaluation Metrics</a></li>
+</ul>
+</li>
+<li><a href="#references">References</a></li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://LinyongGAN.github.io/post/about/">
+              <h3 class="post-title">
+                About
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: 'Ov23livwm7xHhOMu9p2F',
+    clientSecret: 'b9daf4e310084a62f69a96825d56dbe5e5f9863f',
+    repo: 'linyonggan.github.io',
+    owner: 'linyonggan',
+    admin: ['linyonggan'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank"> Gridea</a>
+  <a class="rss" href="https://LinyongGAN.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>
